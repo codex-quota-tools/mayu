@@ -37,7 +37,7 @@
     "copyright": "Copyright © 2026 Codex Quota Tracker contributors",
     "category": "Utility",
     "shortDescription": "Local-first Codex quota and WorkBuddy points tracker",
-    "macOS": { "minimumSystemVersion": "12.0", "signingIdentity": null },
+    "macOS": { "minimumSystemVersion": "12.0", "signingIdentity": "-" },
     "windows": { "certificateThumbprint": null, "digestAlgorithm": "sha256" }
   }
 }
