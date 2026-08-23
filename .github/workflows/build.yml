@@ -1,0 +1,43 @@
+name: Build installers
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-14
+            args: --target aarch64-apple-darwin --bundles app,dmg
+          - platform: windows-2022
+            args: --target x86_64-pc-windows-msvc --bundles nsis
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - uses: dtolnay/rust-toolchain@stable
+        with: { targets: "aarch64-apple-darwin,x86_64-pc-windows-msvc" }
+      - run: npm ci
+      - name: Install Codex CLI (macOS)
+        if: runner.os == 'macOS'
+        run: npm install --no-save @openai/codex@0.146.0-alpha.9
+      - name: Install Codex CLI (Windows)
+        if: runner.os == 'Windows'
+        run: npm install --no-save @openai/codex@0.146.0-alpha.9 "@openai/codex-win32-x64@npm:@openai/codex@0.146.0-alpha.9-win32-x64"
+      - run: npm run sidecar
+      - uses: tauri-apps/tauri-action@v0
+        with: { args: "${{ matrix.args }}" }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: codex-quota-tracker-${{ runner.os }}
+          path: |
+            src-tauri/target/**/bundle/**/*.dmg
+            src-tauri/target/**/bundle/**/*.app
+            src-tauri/target/**/bundle/**/*.exe
