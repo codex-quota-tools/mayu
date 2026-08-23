@@ -10,15 +10,15 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/codex-quota-tools/codex-quota-tracker/releases/latest"><img src="https://img.shields.io/github/v/release/codex-quota-tools/codex-quota-tracker?style=flat-square&color=1686d9" alt="Latest release" /></a>
-  <a href="https://github.com/codex-quota-tools/codex-quota-tracker/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/codex-quota-tools/codex-quota-tracker/ci.yml?branch=main&style=flat-square&label=build" alt="Build status" /></a>
+  <a href="https://github.com/codex-quota-tools/mayu/releases/latest"><img src="https://img.shields.io/github/v/release/codex-quota-tools/mayu?style=flat-square&color=1686d9" alt="Latest release" /></a>
+  <a href="https://github.com/codex-quota-tools/mayu/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/codex-quota-tools/mayu/ci.yml?branch=main&style=flat-square&label=build" alt="Build status" /></a>
   <img src="https://img.shields.io/badge/macOS-Apple%20Silicon-111827?style=flat-square" alt="macOS Apple Silicon" />
   <img src="https://img.shields.io/badge/Windows-x64-111827?style=flat-square" alt="Windows x64" />
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-111827?style=flat-square" alt="MIT License" /></a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/codex-quota-tools/codex-quota-tracker/releases/latest"><strong>下载安装包</strong></a>
+  <a href="https://github.com/codex-quota-tools/mayu/releases/latest"><strong>下载安装包</strong></a>
   ·
   <a href="docs/USAGE.md">使用说明</a>
   ·
@@ -44,7 +44,7 @@
 
 ## 下载与安装
 
-前往 [Releases](https://github.com/codex-quota-tools/codex-quota-tracker/releases/latest) 下载最新版本：
+前往 [Releases](https://github.com/codex-quota-tools/mayu/releases/latest) 下载最新版本：
 
 - macOS Apple Silicon：选择 `.dmg`
 - Windows x64：选择 `Windows_x64-setup.exe`
@@ -91,8 +91,8 @@
 环境要求：Node.js 22、Rust stable，以及对应平台的原生构建工具。
 
 ```bash
-git clone https://github.com/codex-quota-tools/codex-quota-tracker.git
-cd codex-quota-tracker
+git clone https://github.com/codex-quota-tools/mayu.git
+cd mayu
 npm ci
 npm install --no-save @openai/codex@0.146.0-alpha.9
 npm run sidecar
@@ -139,7 +139,7 @@ assets/                      原创图标与项目图片
 
 ## 参与项目
 
-发现问题可以直接提交 [Issue](https://github.com/codex-quota-tools/codex-quota-tracker/issues)。准备贡献代码前，请阅读 [贡献指南](CONTRIBUTING.md) 和 [行为准则](CODE_OF_CONDUCT.md)。安全问题不要公开提交 Issue，处理方式见 [SECURITY.md](SECURITY.md)。
+发现问题可以直接提交 [Issue](https://github.com/codex-quota-tools/mayu/issues)。准备贡献代码前，请阅读 [贡献指南](CONTRIBUTING.md) 和 [行为准则](CODE_OF_CONDUCT.md)。安全问题不要公开提交 Issue，处理方式见 [SECURITY.md](SECURITY.md)。
 
 项目代码采用 [MIT License](LICENSE)。构建中使用的 OpenAI Codex CLI 采用 Apache-2.0，完整声明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
 
