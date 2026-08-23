@@ -13,11 +13,11 @@
     "windows": [{
       "title": "Codex Quota Tracker",
       "width": 390,
-      "height": 400,
+      "height": 590,
       "minWidth": 390,
       "minHeight": 380,
       "maxWidth": 390,
-      "maxHeight": 520,
+      "maxHeight": 590,
       "center": false,
       "resizable": false,
       "fullscreen": false,

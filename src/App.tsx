@@ -27,7 +27,7 @@ const preview: AppSnapshot = {
     updatedAt: Math.floor(Date.now() / 1000)
   },
   workbuddy: undefined,
-  settings: { notificationsEnabled: true, workbuddyThresholds: [1000, 500, 100], menuBarPrefix: "Codex 额度", profileName: "", theme: "system" }
+  settings: { notificationsEnabled: true, workbuddyThresholds: [1000, 500, 100], menuBarPrefix: "Codex 额度", profileName: "", theme: "dark" }
 };
 
 const inTauri = () => "__TAURI_INTERNALS__" in window;
@@ -215,6 +215,10 @@ export default function App() {
 
   return <main className="meter-shell">
     {primary ? <section className="quota-section">
+      <header className="quota-kicker">
+        <span><i />Codex 配额</span>
+        <small>{snapshot.codex.connectionState === "online" ? "已连接" : "同步中"}</small>
+      </header>
       <div className="quota-layout">
         <div className="quota-summary"><strong className="quota-number">{remaining}%</strong><span className="quota-label">当前额度剩余</span></div>
         <div className="detail-list">
@@ -222,7 +226,7 @@ export default function App() {
           <div title="Codex 额度重置时间（北京时间）"><span><ClockCounterClockwise size={17} />北京时间</span><strong>{formatBeijingDate(primary.resetsAt)}</strong></div>
         </div>
       </div>
-      <div className={`progress-track ${tone}`}><i key={snapshot.codex.updatedAt} style={{ width: `${remaining}%` }} /></div>
+      <div className={`progress-track ${tone}`} role="progressbar" aria-label="Codex 剩余额度" aria-valuemin={0} aria-valuemax={100} aria-valuenow={remaining}><i key={snapshot.codex.updatedAt} style={{ width: `${remaining}%` }} /></div>
       <div className="quota-footer">
         <span className="updated-at">{freshness(snapshot.codex.updatedAt)}</span>
         <button className="quota-refresh" onClick={refresh} disabled={refreshing} aria-label="立即刷新"><ArrowClockwise size={16} className={refreshing ? "spin" : ""} /></button>
@@ -260,8 +264,8 @@ export default function App() {
       <label>WorkBuddy 提醒阈值<input value={thresholdText} onChange={event => setThresholdText(event.target.value)} onBlur={() => saveSettings({ thresholds: thresholdText })} /></label>
     </section>}
 
-    <footer className="meter-footer"><span><CheckCircle size={14} />每 60 分钟自动刷新</span><button onClick={() => inTauri() && invoke("quit_app")}><Power size={15} />退出</button></footer>
     {profileOpen && <ProfileSection snapshot={snapshot} onRefresh={refresh} refreshing={refreshing} />}
+    <footer className="meter-footer"><span><CheckCircle size={14} />每 60 分钟自动刷新</span><button onClick={() => inTauri() && invoke("quit_app")}><Power size={15} />退出</button></footer>
     {editorOpen && <WorkBuddyEditor current={snapshot.workbuddy} onClose={() => setEditorOpen(false)} onSaved={load} />}
   </main>;
 }

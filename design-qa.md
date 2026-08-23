@@ -2,13 +2,13 @@
 
 ## Target
 
-- Reference: the user-provided CodexMeter popover screenshot.
-- Implementation viewport: 390 x 400 px.
+- Reference: the user-provided `DESIGN.md` midnight precision-instrument direction, adapted for a quota utility rather than copied from Linear.
+- Implementation viewport: 390 x 590 px.
 - Primary state: Codex weekly quota at 39%, settings collapsed, no WorkBuddy record yet.
 
 ## Visual comparison
 
-The latest annotated reference and the rendered implementation were placed side by side in one 780 x 400 comparison image. The implementation removes the separate top refresh row, places refresh inside the quota card beside the update timestamp, and removes the WorkBuddy official-usage link. The resulting panel begins immediately with the quota card and is visibly shorter.
+The rendered implementation uses a near-black canvas, 0.5 px structural borders, low-weight typography and a single acid-lime signal rail. The quota card remains the only dominant surface; WorkBuddy and profile data deliberately recede. The default expanded profile and footer fit inside a 390 x 590 tray panel, while the settings state stays scrollable without displaying a scrollbar.
 
 ## Interaction checks
 
@@ -17,6 +17,7 @@ The latest annotated reference and the rendered implementation were placed side 
 - Refresh has a visible loading state.
 - The in-card refresh control is clickable and enters its spinning loading state.
 - No browser console warnings or errors were observed in the tested flow.
+- Dark and light themes were both rendered at the target width and checked for overflow, contrast, focus states and information hierarchy.
 
 ## Issues resolved
 
@@ -38,5 +39,8 @@ The latest annotated reference and the rendered implementation were placed side 
 - P1: the profile entry, close control, and manual synchronization control were verified as unique clickable buttons in the browser preview.
 - P1: version 0.1.6 opens directly on the personal profile and resets to that view whenever the tray panel is reopened; the quota view remains reachable through “返回额度”.
 - P1: version 0.1.7 keeps quota, WorkBuddy, settings, and the footer in place, then renders the expanded profile content directly below them in the same scrollable panel.
+- P1: the precision-instrument redesign replaces translucent Apple-style cards and decorative gradients with compact 12 px surfaces, hairline borders and low-weight Inter-compatible typography.
+- P2: the progress rail keeps a continuous scan animation, respects reduced-motion preferences and remains the only strong chromatic signal in the normal state.
+- P1: the fixed desktop panel now opens at 390 x 590 so the default-expanded profile is visible without recreating the earlier oversized window.
 
 final result: passed
