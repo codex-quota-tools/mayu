@@ -34,7 +34,7 @@ jobs:
       - run: npm run sidecar
       - uses: tauri-apps/tauri-action@v0
         with: { args: "${{ matrix.args }}" }
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: codex-quota-tracker-${{ runner.os }}
           path: |
