@@ -12,8 +12,8 @@ jobs:
   test:
     runs-on: macos-14
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -23,4 +23,9 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm test
+      - name: Prepare test-only sidecar placeholder
+        run: |
+          mkdir -p src-tauri/binaries
+          printf '#!/bin/sh\nexit 0\n' > src-tauri/binaries/codex-aarch64-apple-darwin
+          chmod +x src-tauri/binaries/codex-aarch64-apple-darwin
       - run: cargo test --manifest-path src-tauri/Cargo.toml
