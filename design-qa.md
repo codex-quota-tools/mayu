@@ -42,5 +42,8 @@ The rendered implementation uses a near-black canvas, 0.5 px structural borders,
 - P1: the precision-instrument redesign replaces translucent Apple-style cards and decorative gradients with compact 12 px surfaces, hairline borders and low-weight Inter-compatible typography.
 - P2: the progress rail keeps a continuous scan animation, respects reduced-motion preferences and remains the only strong chromatic signal in the normal state.
 - P1: the fixed desktop panel now opens at 390 x 590 so the default-expanded profile is visible without recreating the earlier oversized window.
+- P1: version 0.1.8 uses the same longest-window selection in the tray title and panel headline, preventing conflicting percentages.
+- P2: a second official quota window is rendered as one quiet companion row with its own percentage and countdown; the main percentage remains the only dominant number.
+- P1: manual refresh now ends after 15 seconds and surfaces a compact retry message instead of spinning indefinitely.
 
 final result: passed

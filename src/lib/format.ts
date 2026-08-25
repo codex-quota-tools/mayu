@@ -2,6 +2,21 @@ export const clampPercent = (value: number) => Math.max(0, Math.min(100, value))
 
 export const remainingFromUsed = (used: number) => clampPercent(100 - used);
 
+export function quotaWindowLabel(windowMinutes?: number): string {
+  if (!windowMinutes) return "额度";
+  if (windowMinutes === 10_080) return "周额度";
+  if (windowMinutes % 1_440 === 0) return `${windowMinutes / 1_440} 天额度`;
+  if (windowMinutes % 60 === 0) return `${windowMinutes / 60} 小时额度`;
+  return `${windowMinutes} 分钟额度`;
+}
+
+export function preferredQuotaBucket<T extends { windowMinutes?: number }>(buckets: T[]): T | undefined {
+  return buckets.reduce<T | undefined>((best, bucket) => {
+    if (!best) return bucket;
+    return (bucket.windowMinutes ?? 0) > (best.windowMinutes ?? 0) ? bucket : best;
+  }, undefined);
+}
+
 export function formatDate(epochSeconds?: number): string {
   if (!epochSeconds) return "未提供";
   return new Intl.DateTimeFormat("zh-CN", {

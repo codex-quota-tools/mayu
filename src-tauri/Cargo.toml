@@ -1,6 +1,6 @@
 [package]
 name = "codex-quota-tracker"
-version = "0.1.7"
+version = "0.1.8"
 description = "A local-first Codex quota tracker for macOS and Windows"
 authors = ["Codex Quota Tracker contributors"]
 license = "MIT"

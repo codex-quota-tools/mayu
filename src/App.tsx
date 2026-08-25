@@ -7,16 +7,19 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 import {
   ArrowClockwise, Bell, CalendarBlank, CheckCircle,
   ChartBar, ClockCounterClockwise, Coins, Desktop, Moon, PencilSimple, Power,
-  RocketLaunch, SlidersHorizontal, Sun, UserCircle, WifiSlash
+  RocketLaunch, SlidersHorizontal, Sun, UserCircle, WarningCircle, WifiSlash
 } from "@phosphor-icons/react";
 import type { AppSnapshot, DeviceLogin, WorkBuddySnapshot } from "./types";
-import { formatBeijingDate, formatDate, freshness } from "./lib/format";
+import { formatBeijingDate, formatDate, formatRelative, freshness, preferredQuotaBucket, quotaWindowLabel } from "./lib/format";
 
 const preview: AppSnapshot = {
   codex: {
     connectionState: "online", planType: "Plus", email: "本地预览",
     updatedAt: Math.floor(Date.now() / 1000),
-    buckets: [{ id: "codex", name: "Codex 周额度", kind: "primary", usedPercent: 61, remainingPercent: 39, windowMinutes: 10080, resetsAt: Math.floor(Date.now() / 1000) + 86_400 }]
+    buckets: [
+      { id: "codex", name: "Codex 短期额度", kind: "primary", usedPercent: 29, remainingPercent: 71, windowMinutes: 300, resetsAt: Math.floor(Date.now() / 1000) + 10_800 },
+      { id: "codex", name: "Codex 周额度", kind: "secondary", usedPercent: 61, remainingPercent: 39, windowMinutes: 10_080, resetsAt: Math.floor(Date.now() / 1000) + 86_400 }
+    ]
   },
   usage: {
     summary: { lifetimeTokens: 1_200_000, peakDailyTokens: 240_000, longestRunningTurnSec: 3_600, currentStreakDays: 2, longestStreakDays: 5 },
@@ -128,6 +131,7 @@ export default function App() {
   const [menuPrefix, setMenuPrefix] = useState("Codex 额度");
   const [profileName, setProfileName] = useState("");
   const [login, setLogin] = useState<DeviceLogin>();
+  const [refreshError, setRefreshError] = useState("");
 
   const load = useCallback(async () => {
     if (inTauri()) setSnapshot(await invoke<AppSnapshot>("get_app_snapshot"));
@@ -164,6 +168,10 @@ export default function App() {
   }, [snapshot.settings]);
 
   useEffect(() => {
+    if (snapshot.codex.connectionState === "online") setRefreshError("");
+  }, [snapshot.codex.connectionState, snapshot.codex.updatedAt]);
+
+  useEffect(() => {
     if (!snapshot.settings.notificationsEnabled || !snapshot.workbuddy) return;
     const crossed = snapshot.settings.workbuddyThresholds.find(value => snapshot.workbuddy!.remainingValue <= value);
     if (!crossed) return;
@@ -181,18 +189,20 @@ export default function App() {
     });
   }, [snapshot.codex.buckets, snapshot.settings.notificationsEnabled]);
 
-  const primary = useMemo(() => snapshot.codex.buckets.reduce((best, bucket) => {
-    if (!best) return bucket;
-    return (bucket.windowMinutes ?? 0) > (best.windowMinutes ?? 0) ? bucket : best;
-  }, snapshot.codex.buckets[0]), [snapshot.codex.buckets]);
+  const primary = useMemo(() => preferredQuotaBucket(snapshot.codex.buckets), [snapshot.codex.buckets]);
+  const companion = useMemo(() => snapshot.codex.buckets
+    .filter(bucket => bucket !== primary)
+    .sort((left, right) => (left.windowMinutes ?? Number.MAX_SAFE_INTEGER) - (right.windowMinutes ?? Number.MAX_SAFE_INTEGER))[0], [primary, snapshot.codex.buckets]);
   const remaining = Math.round(primary?.remainingPercent ?? 0);
   const tone = remaining >= 50 ? "healthy" : remaining >= 20 ? "warning" : "danger";
   const workbuddyPercent = snapshot.workbuddy?.totalValue ? Math.max(0, Math.min(100, snapshot.workbuddy.remainingValue / snapshot.workbuddy.totalValue * 100)) : undefined;
 
   async function refresh() {
-    setRefreshing(true);
+    setRefreshing(true); setRefreshError("");
     if (!inTauri()) { window.setTimeout(() => setRefreshing(false), 450); return; }
-    try { await invoke("refresh_codex"); await load(); } finally { setRefreshing(false); }
+    try { await invoke("refresh_codex"); await load(); }
+    catch (error) { setRefreshError(error instanceof Error ? error.message : String(error)); }
+    finally { setRefreshing(false); }
   }
 
   async function beginLogin() {
@@ -214,7 +224,7 @@ export default function App() {
   }
 
   return <main className="meter-shell">
-    {primary ? <section className="quota-section">
+    {primary ? <section className="quota-section" aria-busy={refreshing}>
       <header className="quota-kicker">
         <span><i />Codex 配额</span>
         <small>{snapshot.codex.connectionState === "online" ? "已连接" : "同步中"}</small>
@@ -222,13 +232,18 @@ export default function App() {
       <div className="quota-layout">
         <div className="quota-summary"><strong className="quota-number">{remaining}%</strong><span className="quota-label">当前额度剩余</span></div>
         <div className="detail-list">
-          <div><span><CalendarBlank size={17} />周额度</span><strong>{remaining}%</strong></div>
+          <div><span><CalendarBlank size={17} />{quotaWindowLabel(primary.windowMinutes)}</span><strong>{remaining}%</strong></div>
           <div title="Codex 额度重置时间（北京时间）"><span><ClockCounterClockwise size={17} />北京时间</span><strong>{formatBeijingDate(primary.resetsAt)}</strong></div>
         </div>
       </div>
+      {companion && <div className="quota-companion" aria-label="短期额度">
+        <span>{quotaWindowLabel(companion.windowMinutes)}</span>
+        <strong>{Math.round(companion.remainingPercent)}%</strong>
+        <small>{formatRelative(companion.resetsAt)}</small>
+      </div>}
       <div className={`progress-track ${tone}`} role="progressbar" aria-label="Codex 剩余额度" aria-valuemin={0} aria-valuemax={100} aria-valuenow={remaining}><i key={snapshot.codex.updatedAt} style={{ width: `${remaining}%` }} /></div>
       <div className="quota-footer">
-        <span className="updated-at">{freshness(snapshot.codex.updatedAt)}</span>
+        <span className={`updated-at ${refreshError ? "has-error" : ""}`} title={refreshError || undefined}>{refreshError ? <><WarningCircle size={11} />刷新失败，请重试</> : freshness(snapshot.codex.updatedAt)}</span>
         <button className="quota-refresh" onClick={refresh} disabled={refreshing} aria-label="立即刷新"><ArrowClockwise size={16} className={refreshing ? "spin" : ""} /></button>
       </div>
     </section> : <section className="connection-empty">

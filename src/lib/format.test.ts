@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clampPercent, formatBeijingDate, formatRelative, freshness, remainingFromUsed } from "./format";
+import { clampPercent, formatBeijingDate, formatRelative, freshness, preferredQuotaBucket, quotaWindowLabel, remainingFromUsed } from "./format";
 
 describe("quota formatting", () => {
   it("normalizes remaining percentages", () => {
@@ -22,5 +22,18 @@ describe("quota formatting", () => {
   it("reports stale age", () => {
     expect(freshness(1_000, 1_000_000)).toBe("刚刚更新");
     expect(freshness(1_000, 4_600_000)).toBe("1 小时前更新");
+  });
+
+  it("labels common quota windows", () => {
+    expect(quotaWindowLabel(300)).toBe("5 小时额度");
+    expect(quotaWindowLabel(10_080)).toBe("周额度");
+    expect(quotaWindowLabel()).toBe("额度");
+  });
+
+  it("selects the longest quota window for the headline", () => {
+    const short = { id: "short", windowMinutes: 300 };
+    const weekly = { id: "weekly", windowMinutes: 10_080 };
+    expect(preferredQuotaBucket([short, weekly])).toBe(weekly);
+    expect(preferredQuotaBucket([])).toBeUndefined();
   });
 });
