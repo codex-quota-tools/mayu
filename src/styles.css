@@ -45,6 +45,7 @@ button:focus-visible, input:focus-visible { outline: 1px solid var(--acid); outl
 .quota-kicker span { display: inline-flex; align-items: center; gap: 7px; }
 .quota-kicker span i { width: 6px; height: 6px; border-radius: 50%; background: var(--acid); box-shadow: 0 0 0 3px rgba(228,242,34,.08); }
 .quota-kicker small { color: var(--text-faint); font: inherit; }
+.quota-kicker small.is-offline { color: var(--danger); }
 .quota-layout { display: grid; grid-template-columns: 132px 1fr; align-items: center; min-height: 88px; padding-top: 5px; }
 .quota-summary { text-align: left; border-right: .5px solid var(--border); }
 .quota-number { display: block; font-size: 48px; font-weight: 510; line-height: .96; letter-spacing: -.055em; font-variant-numeric: tabular-nums slashed-zero; }
@@ -77,6 +78,9 @@ button:focus-visible, input:focus-visible { outline: 1px solid var(--acid); outl
 .connection-empty strong { font-size: 13px; font-weight: 510; }
 .connection-empty span { color: var(--text-muted); font-size: 10px; }
 .connection-empty code { margin-top: 5px; color: var(--acid); letter-spacing: .12em; }
+.connection-error, .form-error { display: flex; align-items: center; justify-content: center; gap: 5px; margin: 3px 0 0; color: var(--danger); font-size: 8px; }
+.login-code { display: grid; gap: 5px; margin-top: 3px; color: var(--text-faint); font-size: 8px; }
+.login-code code { margin: 0; padding: 7px 10px; border: .5px solid var(--border-strong); border-radius: 6px; background: var(--surface-raised); }
 
 .workbuddy-section { margin-top: 8px; padding: 10px 12px 9px; border-radius: 12px; }
 .section-title { justify-content: space-between; }
@@ -98,6 +102,7 @@ button:focus-visible, input:focus-visible { outline: 1px solid var(--acid); outl
 .action-bar span { display: inline-flex; align-items: center; gap: 5px; }
 
 .settings-panel { padding: 10px 3px 3px; }
+.settings-error { justify-content: flex-start; margin: 3px 0 7px; }
 .settings-panel label { display: block; margin-bottom: 9px; color: var(--text-muted); font-size: 8px; }
 .settings-panel input, .modal input { width: 100%; margin-top: 4px; padding: 7px 9px; border: 1px solid var(--border); border-radius: 6px; outline: 0; color: var(--text-soft); background: rgba(255,255,255,.02); font-size: 9px; }
 .settings-panel input:focus, .modal input:focus { border-color: var(--text-muted); }
@@ -146,6 +151,7 @@ button:focus-visible, input:focus-visible { outline: 1px solid var(--acid); outl
 
 .primary-button, .text-button { border: .5px solid var(--border); border-radius: 6px; padding: 8px 12px; cursor: pointer; font-size: 10px; }
 .primary-button { border-color: var(--acid); color: var(--void); background: var(--acid); font-weight: 510; }
+.primary-button:disabled { cursor: wait; opacity: .55; }
 .text-button { color: var(--text-soft); background: var(--surface-raised); }
 .modal-backdrop { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; padding: 18px; background: rgba(0,0,0,.68); backdrop-filter: blur(8px); }
 .modal { width: 100%; padding: 18px; border: .5px solid var(--border-strong); border-radius: 12px; background: var(--carbon); box-shadow: 0 4px 32px rgba(0,0,0,.6); }

@@ -11,6 +11,7 @@ import {
 } from "@phosphor-icons/react";
 import type { AppSnapshot, DeviceLogin, WorkBuddySnapshot } from "./types";
 import { formatBeijingDate, formatDate, formatRelative, freshness, preferredQuotaBucket, quotaWindowLabel } from "./lib/format";
+import { readableError, validateWorkBuddyValues } from "./lib/validation";
 
 const preview: AppSnapshot = {
   codex: {
@@ -47,24 +48,34 @@ function WorkBuddyEditor({ current, onClose, onSaved }: { current?: WorkBuddySna
   const [total, setTotal] = useState(current?.totalValue?.toString() ?? "");
   const [resetAt, setResetAt] = useState(current?.resetAt ? new Date(current.resetAt * 1000).toISOString().slice(0, 16) : "");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   async function submit(event: FormEvent) {
-    event.preventDefault(); setSaving(true);
-    if (!inTauri()) { setSaving(false); onClose(); return; }
-    await invoke("save_workbuddy", { input: {
-      remainingValue: Number(remaining), totalValue: total ? Number(total) : null,
-      resetAt: resetAt ? Math.floor(new Date(resetAt).getTime() / 1000) : null
-    }});
-    setSaving(false); onSaved(); onClose();
+    event.preventDefault();
+    const validationError = validateWorkBuddyValues(remaining, total);
+    if (validationError) { setError(validationError); return; }
+    setSaving(true); setError("");
+    try {
+      if (inTauri()) await invoke("save_workbuddy", { input: {
+        remainingValue: Number(remaining), totalValue: total ? Number(total) : null,
+        resetAt: resetAt ? Math.floor(new Date(resetAt).getTime() / 1000) : null
+      }});
+      onSaved(); onClose();
+    } catch (reason) {
+      setError(readableError(reason, "积分保存失败，请重试"));
+    } finally {
+      setSaving(false);
+    }
   }
 
   return <div className="modal-backdrop" onMouseDown={onClose}>
     <form className="modal" onMouseDown={event => event.stopPropagation()} onSubmit={submit}>
       <h2>更新 WorkBuddy 积分</h2>
       <p>数据只保存在本机，并始终标记为手动记录。</p>
-      <label>剩余积分<input required min="0" step="1" type="number" value={remaining} onChange={e => setRemaining(e.target.value)} placeholder="例如 1850" /></label>
-      <label>本期总积分（可选）<input min="1" step="1" type="number" value={total} onChange={e => setTotal(e.target.value)} placeholder="例如 4000" /></label>
+      <label>剩余积分<input required min="0" step="1" type="number" value={remaining} onChange={e => { setRemaining(e.target.value); setError(""); }} placeholder="例如 1850" /></label>
+      <label>本期总积分（可选）<input min="1" step="1" type="number" value={total} onChange={e => { setTotal(e.target.value); setError(""); }} placeholder="例如 4000" /></label>
       <label>重置时间（可选）<input type="datetime-local" value={resetAt} onChange={e => setResetAt(e.target.value)} /></label>
+      {error && <p className="form-error" role="alert"><WarningCircle size={13} />{error}</p>}
       <div className="modal-actions"><button type="button" className="text-button" onClick={onClose}>取消</button><button className="primary-button" disabled={saving}>{saving ? "保存中…" : "保存"}</button></div>
     </form>
   </div>;
@@ -131,7 +142,10 @@ export default function App() {
   const [menuPrefix, setMenuPrefix] = useState("Codex 额度");
   const [profileName, setProfileName] = useState("");
   const [login, setLogin] = useState<DeviceLogin>();
+  const [loginBusy, setLoginBusy] = useState(false);
+  const [loginError, setLoginError] = useState("");
   const [refreshError, setRefreshError] = useState("");
+  const [settingsError, setSettingsError] = useState("");
 
   const load = useCallback(async () => {
     if (inTauri()) setSnapshot(await invoke<AppSnapshot>("get_app_snapshot"));
@@ -196,6 +210,8 @@ export default function App() {
   const remaining = Math.round(primary?.remainingPercent ?? 0);
   const tone = remaining >= 50 ? "healthy" : remaining >= 20 ? "warning" : "danger";
   const workbuddyPercent = snapshot.workbuddy?.totalValue ? Math.max(0, Math.min(100, snapshot.workbuddy.remainingValue / snapshot.workbuddy.totalValue * 100)) : undefined;
+  const connectionLabel = snapshot.codex.connectionState === "online" ? "已连接" : snapshot.codex.connectionState === "connecting" ? "连接中" : snapshot.codex.connectionState === "unsupported" ? "不兼容" : "已离线";
+  const staleMessage = snapshot.codex.connectionState === "online" ? "" : snapshot.codex.connectionState === "connecting" ? "正在连接，显示上次数据" : snapshot.codex.connectionState === "unsupported" ? "版本不兼容，显示上次数据" : "连接中断，显示上次数据";
 
   async function refresh() {
     setRefreshing(true); setRefreshError("");
@@ -206,7 +222,17 @@ export default function App() {
   }
 
   async function beginLogin() {
-    const result = await invoke<DeviceLogin>("start_codex_login"); setLogin(result); await openUrl(result.verificationUrl);
+    setLoginBusy(true); setLoginError("");
+    try {
+      if (!inTauri()) return;
+      const result = await invoke<DeviceLogin>("start_codex_login");
+      setLogin(result);
+      await openUrl(result.verificationUrl);
+    } catch (error) {
+      setLoginError(readableError(error, "无法开始登录，请检查 Codex 连接"));
+    } finally {
+      setLoginBusy(false);
+    }
   }
 
   async function saveSettings(overrides: { notificationsEnabled?: boolean; thresholds?: string; menuBarPrefix?: string; profileName?: string; theme?: "system" | "light" | "dark" } = {}) {
@@ -218,16 +244,17 @@ export default function App() {
       profileName: overrides.profileName ?? profileName,
       theme: overrides.theme ?? snapshot.settings.theme
     };
+    setSettingsError("");
     if (!inTauri()) { setSnapshot(current => ({ ...current, settings })); return; }
-    await invoke("save_settings", settings);
-    await load();
+    try { await invoke("save_settings", settings); await load(); }
+    catch (error) { setSettingsError(readableError(error, "设置保存失败，请重试")); }
   }
 
   return <main className="meter-shell">
     {primary ? <section className="quota-section" aria-busy={refreshing}>
       <header className="quota-kicker">
         <span><i />Codex 配额</span>
-        <small>{snapshot.codex.connectionState === "online" ? "已连接" : "同步中"}</small>
+        <small className={snapshot.codex.connectionState === "online" ? "" : "is-offline"}>{connectionLabel}</small>
       </header>
       <div className="quota-layout">
         <div className="quota-summary"><strong className="quota-number">{remaining}%</strong><span className="quota-label">当前额度剩余</span></div>
@@ -243,14 +270,16 @@ export default function App() {
       </div>}
       <div className={`progress-track ${tone}`} role="progressbar" aria-label="Codex 剩余额度" aria-valuemin={0} aria-valuemax={100} aria-valuenow={remaining}><i key={snapshot.codex.updatedAt} style={{ width: `${remaining}%` }} /></div>
       <div className="quota-footer">
-        <span className={`updated-at ${refreshError ? "has-error" : ""}`} title={refreshError || undefined}>{refreshError ? <><WarningCircle size={11} />刷新失败，请重试</> : freshness(snapshot.codex.updatedAt)}</span>
+        <span className={`updated-at ${refreshError || staleMessage ? "has-error" : ""}`} title={refreshError || snapshot.codex.error || undefined}>{refreshError ? <><WarningCircle size={11} />刷新失败，请重试</> : staleMessage ? <><WarningCircle size={11} />{staleMessage}</> : freshness(snapshot.codex.updatedAt)}</span>
         <button className="quota-refresh" onClick={refresh} disabled={refreshing} aria-label="立即刷新"><ArrowClockwise size={16} className={refreshing ? "spin" : ""} /></button>
       </div>
     </section> : <section className="connection-empty">
       {snapshot.codex.connectionState === "offline" ? <WifiSlash size={26} /> : <RocketLaunch size={26} />}
-      <strong>{snapshot.codex.error || "尚未连接 Codex"}</strong><span>登录后读取官方额度数据</span>
-      <button className="primary-button" onClick={beginLogin}>登录 Codex</button>
-      {login && <code>{login.userCode}</code>}
+      <strong>{snapshot.codex.error || "尚未连接 Codex"}</strong>
+      <span>{snapshot.codex.connectionState === "offline" ? "请确认 Codex CLI 可用，然后重新检查" : snapshot.codex.connectionState === "unsupported" ? "请更新码余或 Codex CLI 后重试" : "登录后读取官方额度数据"}</span>
+      {snapshot.codex.connectionState === "online" ? <button className="primary-button" onClick={beginLogin} disabled={loginBusy}>{loginBusy ? "正在准备登录…" : "登录 Codex"}</button> : <button className="primary-button" onClick={refresh} disabled={refreshing || snapshot.codex.connectionState === "connecting"}>{snapshot.codex.connectionState === "connecting" ? "正在连接…" : refreshing ? "正在检查…" : "重新检查"}</button>}
+      {loginError && <p className="connection-error" role="alert"><WarningCircle size={13} />{loginError}</p>}
+      {login && <div className="login-code"><span>设备代码</span><code>{login.userCode}</code></div>}
     </section>}
 
     <section className="workbuddy-section">
@@ -277,6 +306,7 @@ export default function App() {
       <div className="setting-row"><span><RocketLaunch size={16} />随系统启动</span><button className={`switch ${autostart ? "on" : ""}`} onClick={async () => { autostart ? await disable() : await enable(); setAutostart(!autostart); }}><i /></button></div>
       <div className="setting-row"><span><Bell size={16} />系统通知</span><button className={`switch ${snapshot.settings.notificationsEnabled ? "on" : ""}`} onClick={() => saveSettings({ notificationsEnabled: !snapshot.settings.notificationsEnabled })}><i /></button></div>
       <label>WorkBuddy 提醒阈值<input value={thresholdText} onChange={event => setThresholdText(event.target.value)} onBlur={() => saveSettings({ thresholds: thresholdText })} /></label>
+      {settingsError && <p className="form-error settings-error" role="alert"><WarningCircle size={12} />{settingsError}</p>}
     </section>}
 
     {profileOpen && <ProfileSection snapshot={snapshot} onRefresh={refresh} refreshing={refreshing} />}

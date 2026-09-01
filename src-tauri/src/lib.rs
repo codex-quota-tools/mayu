@@ -1,11 +1,11 @@
 mod codex;
 mod models;
 
-use std::{fs, path::PathBuf, sync::Arc, time::{SystemTime, UNIX_EPOCH}};
+use std::{fs, path::PathBuf, sync::Arc, time::{Duration, SystemTime, UNIX_EPOCH}};
 use codex::{CodexHandle, Request};
 use models::{AppSettings, AppSnapshot, DeviceLogin, PersistedData, WorkBuddyInput, WorkBuddySnapshot};
 use tauri::{menu::{Menu, MenuItem}, tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent}, AppHandle, Emitter, Manager, PhysicalPosition, Rect, State, WindowEvent};
-use tokio::sync::{oneshot, Mutex};
+use tokio::{sync::{oneshot, Mutex}, time::timeout};
 
 #[derive(Clone)]
 pub struct SharedState { pub snapshot: Arc<Mutex<AppSnapshot>>, pub data_path: PathBuf }
@@ -103,12 +103,20 @@ async fn get_app_snapshot(state: State<'_, RuntimeState>) -> Result<AppSnapshot,
 
 #[tauri::command]
 async fn refresh_codex(state: State<'_, RuntimeState>) -> Result<(), String> {
-    let (tx, rx) = oneshot::channel(); state.codex.tx.send(Request::Refresh(tx)).map_err(|_| "Codex 后台未运行".to_string())?; rx.await.map_err(|_| "Codex 后台未响应".to_string())?
+    let (tx, rx) = oneshot::channel();
+    state.codex.tx.send(Request::Refresh(tx)).map_err(|_| "Codex 后台未运行".to_string())?;
+    timeout(Duration::from_secs(20), rx).await
+        .map_err(|_| "Codex 后台连接超时".to_string())?
+        .map_err(|_| "Codex 后台未响应".to_string())?
 }
 
 #[tauri::command]
 async fn start_codex_login(state: State<'_, RuntimeState>) -> Result<DeviceLogin, String> {
-    let (tx, rx) = oneshot::channel(); state.codex.tx.send(Request::Login(tx)).map_err(|_| "Codex 后台未运行".to_string())?; rx.await.map_err(|_| "Codex 后台未响应".to_string())?
+    let (tx, rx) = oneshot::channel();
+    state.codex.tx.send(Request::Login(tx)).map_err(|_| "Codex 后台未运行".to_string())?;
+    timeout(Duration::from_secs(20), rx).await
+        .map_err(|_| "Codex 登录服务响应超时".to_string())?
+        .map_err(|_| "Codex 后台未响应".to_string())?
 }
 
 #[tauri::command]

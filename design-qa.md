@@ -45,5 +45,9 @@ The rendered implementation uses a near-black canvas, 0.5 px structural borders,
 - P1: version 0.1.8 uses the same longest-window selection in the tray title and panel headline, preventing conflicting percentages.
 - P2: a second official quota window is rendered as one quiet companion row with its own percentage and countdown; the main percentage remains the only dominant number.
 - P1: manual refresh now ends after 15 seconds and surfaces a compact retry message instead of spinning indefinitely.
+- P1: version 0.1.9 distinguishes connected, reconnecting, incompatible and offline states; stale official values remain visible but are explicitly labeled as last-known data.
+- P1: device login and native refresh commands now fail recoverably after 20 seconds rather than leaving an indefinite pending state.
+- P1: WorkBuddy manual records validate non-negative values and reject totals below the remaining balance with an inline alert while preserving the editor.
+- P1: the updated default-expanded profile and validation flow were visually verified at the 390 x 590 tray-panel viewport.
 
 final result: passed

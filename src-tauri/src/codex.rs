@@ -134,7 +134,7 @@ pub fn start(app: AppHandle, state: SharedState) -> CodexHandle {
             backoff = 2;
             let mut stdin = child.stdin.take().unwrap();
             let mut lines = BufReader::new(child.stdout.take().unwrap()).lines();
-            let _ = write_line(&mut stdin, &json!({"method":"initialize","id":1,"params":{"clientInfo":{"name":"codex_quota_tracker","title":"Codex Quota Tracker","version":"0.1.8"}}})).await;
+            let _ = write_line(&mut stdin, &json!({"method":"initialize","id":1,"params":{"clientInfo":{"name":"codex_quota_tracker","title":"Codex Quota Tracker","version":"0.1.9"}}})).await;
             let _ = write_line(&mut stdin, &json!({"method":"initialized","params":{}})).await;
             let _ = write_line(&mut stdin, &json!({"method":"account/read","id":2,"params":{"refreshToken":false}})).await;
             let _ = write_line(&mut stdin, &json!({"method":"account/rateLimits/read","id":3})).await;

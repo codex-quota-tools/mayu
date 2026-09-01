@@ -31,4 +31,4 @@ lines.on("line", line => {
 });
 
 const output = {};
-send({ method: "initialize", id: 1, params: { clientInfo: { name: "codex_quota_tracker_smoke", title: "Codex Quota Tracker Smoke Test", version: "0.1.8" } } });
+send({ method: "initialize", id: 1, params: { clientInfo: { name: "codex_quota_tracker_smoke", title: "Codex Quota Tracker Smoke Test", version: "0.1.9" } } });

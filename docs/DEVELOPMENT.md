@@ -60,6 +60,16 @@ Windows x64：
 
 也可以手动触发 `.github/workflows/build.yml`。正式 Release 应提供 SHA-256，并在大规模分发前配置代码签名。
 
+## 跨电脑源码包
+
+在已提交并通过测试的版本上运行：
+
+```bash
+npm run package:source
+```
+
+压缩包和对应的 SHA-256 会生成在 `release/`。源码包基于 Git 归档，只包含已跟踪文件，不包含 `.git/`、依赖、编译缓存、sidecar、安装包、本机设置或登录数据。解压后先阅读 `docs/CODEX_HANDOFF.md`。
+
 ## 版本升级
 
 发布前同步修改 `package.json`、`src-tauri/Cargo.toml`、`src-tauri/tauri.conf.json`、App Server 初始化消息中的版本和 `CHANGELOG.md`。升级 `@openai/codex` 后必须重新运行 sidecar 准备、冒烟测试和两个平台的安装包构建。
